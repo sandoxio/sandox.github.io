@@ -3217,9 +3217,11 @@
 				};
 			`);
 
-				dependencies.reverse().forEach(moduleFilePath => {
-					scriptAdd(null, moduleUrlByFile[moduleFilePath]);
-				});
+				setTimeout(() => {
+					dependencies.reverse().forEach(moduleFilePath => {
+						scriptAdd(null, moduleUrlByFile[moduleFilePath]);
+					});
+				}, 0);
 			} else {
 				busEvent.fire('actions.log.add', {text: 'Index file "app.js" is missing', type: 'error', date: new Date()});
 			}
@@ -6273,15 +6275,7 @@
 
 	customElements.define('x-ide-code', IdeTabContentCode);
 
-	let Tpl_settings = class extends RP {
-						constructor(model, logic) {
-							const tree = {"vDom":{"tree":[{"type":"tag","tagName":"div","attrs":{},"childNodes":[{"type":"tag","tagName":"div","attrs":{},"childNodes":[{"type":"textNode","value":"This is the IDE settings panel."}]},{"type":"tag","tagName":"div","attrs":{},"childNodes":[{"type":"textNode","value":"Specific settings of various parameters will appear in ms2 and ms3"}]}]}]}};
-							super(tree, model, logic);
-						}
-					};
-					customElements.define('x-tpl_settings', Tpl_settings);
-
-	const rules$2 = [{"selector":"x-ide-settings ","rule":"padding: 10px;"}];
+	const rules$2 = [{"selector":"x-tpl_settings ","rule":"display: block;height: 100%;width: 100%;"},{"selector":"x-tpl_settings x-tree ","rule":"margin-top: 20px;width: 200px;height: 100%;overflow: auto;display: inline-block;"},{"selector":"x-tpl_settings [name=content] ","rule":"width: 300px;height: 100%;display: inline-block;overflow: auto;"}];
 				const css$2 = {
 					install:() => {
 						let cssStyle = document.body.querySelector("style");
@@ -6296,24 +6290,160 @@
 							cssStyleSheet.addRule(ruleCfg.selector, ruleCfg.rule, 0);
 						});
 						//files.push.apply(files, data.files);
-						//console.log('css installed [/srv/sandox/src/components/tabContents/settings/settings.css]:', rules);
+						//console.log('css installed [/srv/sandox/src/components/modal/settings/settings.css]:', rules);
 					}
 				};
+
+	let Tpl_settings = class extends RP {
+						constructor(model, logic) {
+							const tree = {"vDom":{"tree":[{"type":"component","tagName":"x-tree","attrs":{"value":{"valueOut":"m.settingsTree","modelDepends":[{"refName":"m","modelPath":"settingsTree","valueOutRender":"m.settingsTree","jsonInnerPath":""}],"type":"json"},"selected":{"valueOut":"m.selectedCategory","modelDepends":[{"refName":"m","modelPath":"selectedCategory","valueOutRender":"m.selectedCategory","jsonInnerPath":""}],"type":"json"}},"childNodes":[]},{"type":"tag","tagName":"div","attrs":{"name":{"value":"content","type":"string"}},"childNodes":[]}]}};
+							super(tree, model, logic);
+						}
+					};
+					customElements.define('x-tpl_settings', Tpl_settings);
+				
+					let Tpl_settings_appearance = class extends RP {
+						constructor(model, logic) {
+							const tree = {"vDom":{"tree":[{"type":"tag","tagName":"div","attrs":{},"childNodes":[{"type":"textNode","value":"Theme"}]},{"type":"tag","tagName":"div","attrs":{"class":{"value":"control","type":"string"}},"childNodes":[{"type":"tag","tagName":"button","attrs":{"class":{"value":"big main","type":"string"},"onclick":{"type":"event","fn":"self.create();"}},"childNodes":[{"type":"textNode","value":"Create file"}]},{"type":"tag","tagName":"button","attrs":{"class":{"value":"big","type":"string"},"onclick":{"type":"event","fn":"self.cancel();"}},"childNodes":[{"type":"textNode","value":"Cancel"}]}]}]}};
+							super(tree, model, logic);
+						}
+					};
+					customElements.define('x-tpl_settings_appearance', Tpl_settings_appearance);
+				
+					let Tpl_settings_system = class extends RP {
+						constructor(model, logic) {
+							const tree = {"vDom":{"tree":[{"type":"tag","tagName":"div","attrs":{"class":{"value":"control","type":"string"}},"childNodes":[{"type":"tag","tagName":"button","attrs":{"class":{"value":"big main","type":"string"},"onclick":{"type":"event","fn":"self.create();"}},"childNodes":[{"type":"textNode","value":"Create file"}]},{"type":"tag","tagName":"button","attrs":{"class":{"value":"big","type":"string"},"onclick":{"type":"event","fn":"self.cancel();"}},"childNodes":[{"type":"textNode","value":"Cancel"}]}]}]}};
+							super(tree, model, logic);
+						}
+					};
+					customElements.define('x-tpl_settings_system', Tpl_settings_system);
+				
+					let Tpl_settings_keymap = class extends RP {
+						constructor(model, logic) {
+							const tree = {"vDom":{"tree":[{"type":"tag","tagName":"div","attrs":{"class":{"value":"control","type":"string"}},"childNodes":[{"type":"tag","tagName":"button","attrs":{"class":{"value":"big main","type":"string"},"onclick":{"type":"event","fn":"self.create();"}},"childNodes":[{"type":"textNode","value":"Create file"}]},{"type":"tag","tagName":"button","attrs":{"class":{"value":"big","type":"string"},"onclick":{"type":"event","fn":"self.cancel();"}},"childNodes":[{"type":"textNode","value":"Cancel"}]}]}]}};
+							super(tree, model, logic);
+						}
+					};
+					customElements.define('x-tpl_settings_keymap', Tpl_settings_keymap);
 
 	css$2.install();
 
 	/**
-	 * @description IDE Settings
 	 */
-	class IdeTabContentSettings extends HTMLElement {
+	const settings = () => new (class {
+		#$window;
+		#$settings;
+		#cfg;
+
 		constructor() {
-			super();
+			this.#$settings = new Tpl_settings({
+				selectedCategory: null,
+				settingsTree: [
+					{
+						title: 'Appearance',
+						color: '#fff',
+						isDirectory: false,
+						isVisible: true,
+						isExpanded: false
+					},
+					{
+						title: 'Keymap',
+						color: '#fff',
+						isDirectory: false,
+						isVisible: true,
+						isExpanded: false
+					},
+					{
+						title: 'Editor',
+						color: '#fff',
+						isDirectory: true,
+						isVisible: true,
+						isExpanded: false,
+						childNodes: [
+							{
+								title: 'Color scheme',
+								color: '#fff',
+								isDirectory: false,
+								isVisible: true,
+								isExpanded: false
+							},
+							{
+								title: 'Code style',
+								color: '#fff',
+								isDirectory: true,
+								isVisible: true,
+								isExpanded: false,
+								childNodes: [
+									{
+										ico: 'file_js',
+										title: 'Javascript',
+										color: '#fff',
+										isDirectory: false,
+										isVisible: true
+									}
+								]
+							},
+						]
+					},
 
-			this.appendChild(new Tpl_settings());
+					{
+						title: 'Plugins',
+						color: '#fff',
+						isDirectory: false,
+						isVisible: true,
+						isExpanded: false
+					},
+					{
+						title: 'Build, Execution',
+						color: '#fff',
+						isDirectory: true,
+						isVisible: true,
+						isExpanded: false,
+						childNodes: [
+							{
+								title: 'Compiler',
+								color: '#fff',
+								isDirectory: true,
+								isVisible: true,
+								childNodes: [
+									{
+										ico: 'file_js',
+										title: 'Javascript',
+										color: '#fff',
+										isDirectory: false,
+										isVisible: true
+									}
+								]
+							}
+						]
+					}
+				]
+			}, this);
+			this.#$window = new Window({
+				title: 'Settings',
+				width: 600,
+				height: 500,
+				uiLock: true,
+				$content: this.#$settings
+			});
+		};
+
+		/*
+		if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+			// dark mode
+		} else {
+			// light
 		}
-	}
 
-	customElements.define('x-ide-settings', IdeTabContentSettings);
+		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+			const newColorScheme = e.matches ? "dark" : "light";
+		});
+		 */
+
+		cancel() {
+			this.#$window.close();
+		}
+	})();
 
 	const rules$1 = [{"selector":"x-menu ","rule":"display: block;margin: 0;padding: 0;background: var(--element-bg-color);width: 100%;white-space: nowrap;"},{"selector":"x-menu x-menu-item ","rule":"position: relative;display: inline-block;font-size: 12px;cursor: default;"},{"selector":"x-menu x-menu-item > div ","rule":"padding: 6px 10px 4px;"},{"selector":"x-menu x-menu-item.expanded ","rule":"background: var(--element-bg-color-selected);"},{"selector":"x-menu x-menu-item submenu ","rule":"display: none;"},{"selector":"x-menu x-menu-item.expanded submenu ","rule":"position: absolute;z-index: 10000;display: block;top: 24px;left: 0;width: 200px;background: var(--element-bg-color);border: var(--element-border);"},{"selector":"x-menu x-menu-item submenu x-menu-item ","rule":"display: block;"},{"selector":"x-menu x-menu-item submenu x-menu-item:hover ","rule":"background: var(--element-bg-color-selected);"},{"selector":"x-menu x-menu-item submenu x-menu-item span ","rule":"display: block;"},{"selector":".line ","rule":"display: block;height: 1px;width: 100%;background-color: #323232;"}];
 				const css$1 = {
@@ -6753,7 +6883,7 @@
 			});
 
 			busEvent.on("actions.settings.open", () => {
-				this.tabSettingsOpen();
+				settings();
 			});
 
 			//console.log("this.$panelSpace:", this.$panelSpace);
@@ -6793,16 +6923,6 @@
 			let tabPid = ':' + cfg.path;
 			console.log('[app] fileClose:', cfg);
 			this.$tabs.close(tabPid);
-		}
-
-		tabSettingsOpen() {
-			let tabPid = ':settings';
-			if (this.$tabs.isOpened(tabPid)) {
-				this.$tabs.select(tabPid);
-			} else {
-				let $tabContent = new IdeTabContentSettings();
-				this.$tabs.create(tabPid, 'IDE Settings', $tabContent);
-			}
 		}
 	};
 
